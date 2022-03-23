@@ -1,37 +1,18 @@
-## Welcome to GitHub Pages
+### 프로젝트 소개
+- 딥러닝을 이용하여 게임의 리소스를 생성하고, 유니티와 같은 게임 제작 툴에서 바로 불러와서 플레이할 수 있는 형태의 리소스 생성 툴
+- 게임 개발자는 그 리소스를 기반으로 디테일을 추가하여 완성된 게임으로 발전시킬 수 있다.
 
-You can use the [editor on GitHub](https://github.com/kookmin-sw/cap-template/edit/master/index.md) to maintain and preview the content for your website in Markdown files.
+### Abstract
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+### 소개 영상
 
-### Markdown
+### 팀 소개
+## [김도엽](https://github.com/DYGames)
+## 20181579
+## 데이터 수집, GUI, 게임 엔진 미들웨어
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+## [고현성](https://github.com/cokwa)
+## 20191549
+## 딥러닝 모델
 
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/kookmin-sw/cap-template/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+### 사용법
