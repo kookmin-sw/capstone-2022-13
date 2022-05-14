@@ -53,10 +53,6 @@ public class DAD : EditorWindow
         psi.RedirectStandardError = true;
 
         process = Process.Start(psi);
-        process.Exited += (a, b) =>
-        {
-            UnityEngine.Debug.Log("WTF");
-        };
     }
 
     async void ReadPython()
@@ -68,7 +64,6 @@ public class DAD : EditorWindow
         }
 
         string result = await process.StandardOutput.ReadLineAsync();
-                    UnityEngine.Debug.Log(result);
         switch (result)
         {
             case "Image":
@@ -79,10 +74,10 @@ public class DAD : EditorWindow
                 StringBuilder sb = new StringBuilder();
                 while (true)
                 {
-                    result = await process.StandardOutput.ReadLineAsync();
+                    result = process.StandardOutput.ReadLine();
                     if (result == "Done")
                         break;
-                    sb.Append(result);
+                    sb.AppendLine(result);
                 }
                 ImportOBJ(sb.ToString());
                 break;
