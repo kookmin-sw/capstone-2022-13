@@ -35,6 +35,7 @@ public class DAD : EditorWindow
 
     Process process = null;
     UnityEngine.UI.Image image = null;
+    ProcessStartInfo psi;
 
     void ExecutePython()
     {
@@ -44,7 +45,7 @@ public class DAD : EditorWindow
             return;
         }
 
-        var psi = new ProcessStartInfo();
+        psi = new ProcessStartInfo();
         psi.FileName = @"C:\Users\dygam\AppData\Local\Programs\Python\Python39\python.exe";
         psi.Arguments = @"C:\Users\dygam\Desktop\test.py";
         psi.UseShellExecute = false;
@@ -53,6 +54,9 @@ public class DAD : EditorWindow
         psi.RedirectStandardError = true;
 
         process = Process.Start(psi);
+        process.EnableRaisingEvents = true;
+        process.ErrorDataReceived += (s, e) => { UnityEngine.Debug.Log(e.Data); };
+        process.Exited += (s, e) => { DisposePython(); };
     }
 
     async void ReadPython()
@@ -70,19 +74,20 @@ public class DAD : EditorWindow
                 result = await process.StandardOutput.ReadLineAsync();
                 ImportBase64Image(result, image);
                 break;
-            case "Model":
-                StringBuilder sb = new StringBuilder();
-                while (true)
-                {
-                    result = process.StandardOutput.ReadLine();
-                    if (result == "Done")
-                        break;
-                    sb.AppendLine(result);
-                }
-                ImportOBJ(sb.ToString());
-                break;
-            case "Exit":
-                DisposePython();
+            case "Obj":
+                string name = await process.StandardOutput.ReadLineAsync();
+                result = await process.StandardOutput.ReadLineAsync();
+                int size = int.Parse(result);
+                char[] buf = new char[size];
+                await process.StandardOutput.ReadAsync(buf, 0, size);
+
+                result = await process.StandardOutput.ReadLineAsync();
+                UnityEngine.Debug.Log(result);
+                size = int.Parse(result);
+                char[] buf1 = new char[size];
+                await process.StandardOutput.ReadAsync(buf1, 0, size);
+
+                ImportOBJ(new string(buf), name, new string(buf1));
                 break;
         }
     }
@@ -108,8 +113,8 @@ public class DAD : EditorWindow
         o.sprite = sprite;
     }
 
-    void ImportOBJ(string s)
+    void ImportOBJ(string s, string name, string mat)
     {
-        GameObject o = OBJLoader.LoadOBJFile(s, "name");
+        GameObject o = OBJLoader.LoadOBJFile(s, name, mat);
     }
 }

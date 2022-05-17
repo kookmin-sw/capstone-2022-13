@@ -19,6 +19,7 @@ public class OBJLoader
 {
     public static bool splitByMaterial = false;
     public static string[] searchPaths = new string[] { "", "%FileName%_Textures" + Path.DirectorySeparatorChar };
+    public static Material[] mtls;
     //structures
     struct OBJFace
     {
@@ -38,7 +39,7 @@ public class OBJLoader
         {
             System.Diagnostics.Stopwatch s = new System.Diagnostics.Stopwatch();
             s.Start();
-            LoadOBJFile(pth, "name");
+            //LoadOBJFile(pth, "name");
             Debug.Log("OBJ load took " + s.ElapsedMilliseconds + "ms");
             s.Stop();
         }
@@ -81,6 +82,7 @@ public class OBJLoader
 
         return null;
     }
+
     public static Material[] LoadMTLFile(string fn)
     {
         Material currentMaterial = null;
@@ -167,7 +169,7 @@ public class OBJLoader
         return matlList.ToArray();
     }
 
-    public static GameObject LoadOBJFile(string fn, string name)
+    public static GameObject LoadOBJFile(string fn, string name, string mat)
     {
         bool hasNormals = false;
         //OBJ LISTS
@@ -202,8 +204,7 @@ public class OBJLoader
                     //load cache
                     //string pth = OBJGetFilePath(data, OBJFileInfo.Directory.FullName + Path.DirectorySeparatorChar, meshName);
                     //if (pth != null)
-                    //    materialCache = LoadMTLFile(pth);
-
+                    materialCache = LoadMTLFile(mat);
                 }
                 else if ((cmps[0] == "g" || cmps[0] == "o") && splitByMaterial == false)
                 {
