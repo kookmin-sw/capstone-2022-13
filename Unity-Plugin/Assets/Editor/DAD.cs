@@ -9,16 +9,45 @@ using System.IO;
 
 public class DAD : EditorWindow
 {
+    public class Item
+    {
+        public string name;
+        public string desc;
+        public string type;
+        public string effect;
+        public string value;
+
+        public Item(string name, string type, string desc, string effect, string value)
+        {
+            this.name = name;
+            this.type = type;
+            this.desc = desc;
+            this.effect = effect;
+            this.value = value;
+        }
+    }
+    public class Quest
+    {
+        public string name;
+        public string desc;
+        public List<string> obj;
+
+        public Quest(string name, string desc, List<string> obj)
+        {
+            this.name = name;
+            this.desc = desc;
+            this.obj = obj;
+        }
+    }
     public DAD()
     {
         theme = "";
         regions = new List<string>();
         characters = new List<string>();
         synopsis = "";
-        items = new List<string>();
-        quests = new List<string>();
-        meshs = new List<Mesh>();
-        input = "";
+        items = new List<Item>();
+        quests = new List<Quest>();
+        meshs = new List<GameObject>();
         category = "";
     }
 
@@ -26,12 +55,10 @@ public class DAD : EditorWindow
     List<string> regions;
     List<string> characters;
     string synopsis;
-    List<string> items;
-    List<string> quests;
-    List<Mesh> meshs;
+    List<Item> items;
+    List<Quest> quests;
+    List<GameObject> meshs;
     string category;
-
-    string input;
 
     [MenuItem("DAD/Generate Samples")]
     static void Open()
@@ -60,7 +87,82 @@ public class DAD : EditorWindow
         }
     }
 
+    public string ParseXML(string s, string t)
+    {
+        string f = string.Format("<{0}>", t);
+        string l = string.Format("</{0}>", t);
+        if (!s.Contains(f))
+            return "";
+        int p1 = s.IndexOf(f) + f.Length;
+        int p2 = s.IndexOf(l);
+        return s.Substring(p1, p2 - p1);
+    }
+
+    void DrawItemList(string name, List<Item> list)
+    {
+        GUILayout.Label(name);
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i].name.Length == 0)
+            {
+                list.RemoveAt(i);
+                i--;
+                continue;
+            }
+
+            list[i].name = GUILayout.TextField(list[i].name);
+            list[i].desc = GUILayout.TextField(list[i].desc);
+            list[i].type = GUILayout.TextField(list[i].type);
+            list[i].effect = GUILayout.TextField(list[i].effect);
+            list[i].value = GUILayout.TextField(list[i].value);
+        }
+
+        if (GUILayout.Button("Add " + name))
+        {
+            string s = ProcessPython(name.ToLower());
+            list.Add(new Item(ParseXML(s, "name"), ParseXML(s, "type"), ParseXML(s, "desc"), ParseXML(s, "effect"), ParseXML(s, "value")));
+        }
+    }
+
+    void DrawQuestList(string name, List<Quest> list)
+    {
+        GUILayout.Label(name);
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i].name.Length == 0)
+            {
+                list.RemoveAt(i);
+                i--;
+                continue;
+            }
+
+            list[i].name = GUILayout.TextField(list[i].name);
+            list[i].desc = GUILayout.TextField(list[i].desc);
+            for (int j = 0; j < list[i].obj.Count; j++)
+            {
+                list[i].obj[j] = GUILayout.TextField(list[i].obj[j]);
+            }
+        }
+
+        if (GUILayout.Button("Add " + name))
+        {
+            string s = ProcessPython(name.ToLower());
+            List<string> objs = new List<string>();
+            int i = 1;
+            while(true)
+            {
+                string z = ParseXML(s, "obj " + i);
+                if (z.Length == 0)
+                    break;
+                objs.Add(z);
+                i++;
+            }
+            list.Add(new Quest(ParseXML(s, "name"), ParseXML(s, "desc"), objs));
+        }
+    }
+
     Vector2 scroll;
+    Vector2 previewScroll;
 
     private void OnGUI()
     {
@@ -75,14 +177,39 @@ public class DAD : EditorWindow
         {
             synopsis = ProcessPython("synopsis");
         }
-        DrawStringList("Item", items);
-        DrawStringList("Quest", quests);
+        DrawItemList("Item", items);
+        DrawQuestList("Quest", quests);
+        GUILayout.Label("Category");
+        category = GUILayout.TextField(category);
         if (GUILayout.Button("Generate Models"))
         {
-            category = "plane";
-            ImportOBJ(ProcessPython("model"));
+            foreach (var item in meshs)
+            {
+                Destroy(item);
+            }
+            meshs.Clear();
+            for (int i = 0; i < 10; i ++)
+            {
+                string s = ProcessPython("model");
+                ImportOBJ(s);
+            }
         }
         GUILayout.EndScrollView();
+        if (meshs.Count > 0)
+        {
+            previewScroll = GUILayout.BeginScrollView(previewScroll, true, false);
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            foreach (var item in meshs)
+            {
+                if(GUILayout.Button(AssetPreview.GetAssetPreview(item), GUILayout.Height(100), GUILayout.Width(100)))
+                {
+                    Instantiate(item);
+                }
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.EndScrollView();
+        }
     }
 
     Process process = null;
@@ -113,47 +240,55 @@ public class DAD : EditorWindow
 
     string ProcessPython(string mode)
     {
-        if (process == null)
+        string t = "";
+        try
         {
-            UnityEngine.Debug.Log("process is not on running, execute python process");
-            ExecutePython();
-        }
+            if (process == null)
+            {
+                UnityEngine.Debug.Log("process is not on running, execute python process");
+                ExecutePython();
+            }
 
-        ProcessStandardInputWriteLineInBase64('/' + mode);
-        ProcessStandardInputWriteLineInBase64("/theme");
-        ProcessStandardInputWriteLineInBase64(theme);
-        ProcessStandardInputWriteLineInBase64("/end");
-        ProcessStandardInputWriteLineInBase64("/regions");
-        foreach (var item in regions)
-        {
-            ProcessStandardInputWriteLineInBase64(item);
+            ProcessStandardInputWriteLineInBase64('/' + mode);
+            ProcessStandardInputWriteLineInBase64("/theme");
+            ProcessStandardInputWriteLineInBase64(theme);
+            ProcessStandardInputWriteLineInBase64("/end");
+            ProcessStandardInputWriteLineInBase64("/regions");
+            foreach (var item in regions)
+            {
+                ProcessStandardInputWriteLineInBase64(item);
+            }
+            ProcessStandardInputWriteLineInBase64("/end");
+            ProcessStandardInputWriteLineInBase64("/characters");
+            foreach (var item in characters)
+            {
+                ProcessStandardInputWriteLineInBase64(item);
+            }
+            ProcessStandardInputWriteLineInBase64("/end");
+            ProcessStandardInputWriteLineInBase64("/items");
+            foreach (var item in items)
+            {
+                ProcessStandardInputWriteLineInBase64(item.name);
+            }
+            ProcessStandardInputWriteLineInBase64("/end");
+            ProcessStandardInputWriteLineInBase64("/quests");
+            foreach (var item in quests)
+            {
+                ProcessStandardInputWriteLineInBase64(item.name);
+            }
+            ProcessStandardInputWriteLineInBase64("/end");
+            ProcessStandardInputWriteLineInBase64("/category");
+            ProcessStandardInputWriteLineInBase64(category);
+            ProcessStandardInputWriteLineInBase64("/end");
+            ProcessStandardInputWriteLineInBase64("/end");
+            t = process.StandardOutput.ReadLine();
+            byte[] bytetest = Convert.FromBase64String(t);
+            t = Encoding.UTF8.GetString(bytetest);
         }
-        ProcessStandardInputWriteLineInBase64("/end");
-        ProcessStandardInputWriteLineInBase64("/characters");
-        foreach (var item in characters)
+        catch
         {
-            ProcessStandardInputWriteLineInBase64(item);
+            return "null";
         }
-        ProcessStandardInputWriteLineInBase64("/end");
-        ProcessStandardInputWriteLineInBase64("/items");
-        foreach (var item in items)
-        {
-            ProcessStandardInputWriteLineInBase64(item);
-        }
-        ProcessStandardInputWriteLineInBase64("/end");
-        ProcessStandardInputWriteLineInBase64("/quests");
-        foreach (var item in quests)
-        {
-            ProcessStandardInputWriteLineInBase64(item);
-        }
-        ProcessStandardInputWriteLineInBase64("/end");
-        ProcessStandardInputWriteLineInBase64("/category");
-        ProcessStandardInputWriteLineInBase64(category);
-        ProcessStandardInputWriteLineInBase64("/end");
-        ProcessStandardInputWriteLineInBase64("/end");
-        string t = process.StandardOutput.ReadLine();
-        byte[] bytetest = Convert.FromBase64String(t);
-        t = Encoding.UTF8.GetString(bytetest);
         return t;
     }
 
@@ -236,5 +371,7 @@ public class DAD : EditorWindow
         GameObject o = new GameObject();
         o.AddComponent<MeshFilter>().mesh = OBJLoader.Load(s);
         o.AddComponent<MeshRenderer>().material = new Material(Shader.Find("Standard"));
+        o.hideFlags = HideFlags.HideInHierarchy;
+        meshs.Add(o);
     }
 }
