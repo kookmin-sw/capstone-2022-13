@@ -98,6 +98,21 @@ public class DAD : EditorWindow
         return s.Substring(p1, p2 - p1);
     }
 
+    void DrawElement(string header, ref string content)
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(header);
+        content = GUILayout.TextArea(content, GUILayout.Width(200));
+        GUILayout.EndHorizontal();
+    }
+
+    void DrawLine()
+    {
+        Rect rect = EditorGUILayout.GetControlRect(false, 1);
+        rect.height = 1;
+        EditorGUI.DrawRect(rect, new Color(0.5f, 0.5f, 0.5f, 1));
+    }
+
     void DrawItemList(string name, List<Item> list)
     {
         GUILayout.Label(name);
@@ -110,17 +125,18 @@ public class DAD : EditorWindow
                 continue;
             }
 
-            list[i].name = GUILayout.TextField(list[i].name);
-            list[i].desc = GUILayout.TextField(list[i].desc);
-            list[i].type = GUILayout.TextField(list[i].type);
-            list[i].effect = GUILayout.TextField(list[i].effect);
-            list[i].value = GUILayout.TextField(list[i].value);
+            DrawElement("name", ref list[i].name);
+            DrawElement("desc", ref list[i].desc);
+            DrawElement("type", ref list[i].type);
+            DrawElement("effect", ref list[i].effect);
+            DrawElement("value", ref list[i].value);
+            DrawLine();
         }
 
         if (GUILayout.Button("Add " + name))
         {
             string s = ProcessPython(name.ToLower());
-            list.Add(new Item(ParseXML(s, "name"), ParseXML(s, "type"), ParseXML(s, "desc"), ParseXML(s, "effect"), ParseXML(s, "value")));
+            items.Add(new Item(ParseXML(s, "name"), ParseXML(s, "type"), ParseXML(s, "desc"), ParseXML(s, "effect"), ParseXML(s, "value")));
         }
     }
 
@@ -136,12 +152,16 @@ public class DAD : EditorWindow
                 continue;
             }
 
-            list[i].name = GUILayout.TextField(list[i].name);
-            list[i].desc = GUILayout.TextField(list[i].desc);
+            DrawElement("name", ref list[i].name);
+            DrawElement("desc", ref list[i].desc);
             for (int j = 0; j < list[i].obj.Count; j++)
             {
-                list[i].obj[j] = GUILayout.TextField(list[i].obj[j]);
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("obj " + (j + 1));
+                list[i].obj[j] = GUILayout.TextArea(list[i].obj[j], GUILayout.Width(200));
+                GUILayout.EndHorizontal();
             }
+            DrawLine();
         }
 
         if (GUILayout.Button("Add " + name))
@@ -157,7 +177,7 @@ public class DAD : EditorWindow
                 objs.Add(z);
                 i++;
             }
-            list.Add(new Quest(ParseXML(s, "name"), ParseXML(s, "desc"), objs));
+            quests.Add(new Quest(ParseXML(s, "name"), ParseXML(s, "desc"), objs));
         }
     }
 
@@ -204,7 +224,7 @@ public class DAD : EditorWindow
             {
                 if(GUILayout.Button(AssetPreview.GetAssetPreview(item), GUILayout.Height(100), GUILayout.Width(100)))
                 {
-                    Instantiate(item);
+                    Instantiate(item).transform.position = new Vector3(0,0,0);
                 }
             }
             GUILayout.EndHorizontal();
@@ -243,6 +263,11 @@ public class DAD : EditorWindow
         string t = "";
         try
         {
+            if (process != null && process.StandardOutput.EndOfStream)
+            {
+                process.Dispose();
+                process = null;
+            }
             if (process == null)
             {
                 UnityEngine.Debug.Log("process is not on running, execute python process");
@@ -285,8 +310,10 @@ public class DAD : EditorWindow
             byte[] bytetest = Convert.FromBase64String(t);
             t = Encoding.UTF8.GetString(bytetest);
         }
-        catch
+        catch (Exception e)
         {
+            UnityEngine.Debug.LogError(e.Message);
+            UnityEngine.Debug.LogError(e.StackTrace);
             return "null";
         }
         return t;
@@ -370,8 +397,10 @@ public class DAD : EditorWindow
     {
         GameObject o = new GameObject();
         o.AddComponent<MeshFilter>().mesh = OBJLoader.Load(s);
-        o.AddComponent<MeshRenderer>().material = new Material(Shader.Find("Standard"));
+        MeshRenderer r = o.AddComponent<MeshRenderer>();
+        r.material = new Material(Shader.Find("Standard"));
         o.hideFlags = HideFlags.HideInHierarchy;
+        o.transform.position = new Vector3(10000, 10000, 10000);
         meshs.Add(o);
     }
 }
