@@ -101,8 +101,8 @@ public class DAD : EditorWindow
     void DrawElement(string header, ref string content)
     {
         GUILayout.BeginHorizontal();
-        GUILayout.Label(header);
-        content = GUILayout.TextArea(content, GUILayout.Width(200));
+        GUILayout.Label(header, GUILayout.Width(50));
+        content = GUILayout.TextArea(content);
         GUILayout.EndHorizontal();
     }
 
@@ -157,8 +157,8 @@ public class DAD : EditorWindow
             for (int j = 0; j < list[i].obj.Count; j++)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Label("obj " + (j + 1));
-                list[i].obj[j] = GUILayout.TextArea(list[i].obj[j], GUILayout.Width(200));
+                GUILayout.Label("obj " + (j + 1), GUILayout.Width(50));
+                list[i].obj[j] = GUILayout.TextArea(list[i].obj[j]);
                 GUILayout.EndHorizontal();
             }
             DrawLine();
@@ -203,16 +203,16 @@ public class DAD : EditorWindow
         category = GUILayout.TextField(category);
         if (GUILayout.Button("Generate Models"))
         {
-            foreach (var item in meshs)
-            {
-                Destroy(item);
-            }
-            meshs.Clear();
-            for (int i = 0; i < 10; i ++)
-            {
+            //foreach (var item in meshs)
+            //{
+            //    Destroy(item);
+            //}
+            //meshs.Clear();
+            //for (int i = 0; i < 10; i ++)
+            //{
                 string s = ProcessPython("model");
                 ImportOBJ(s);
-            }
+            //}
         }
         GUILayout.EndScrollView();
         if (meshs.Count > 0)
@@ -244,7 +244,7 @@ public class DAD : EditorWindow
         }
 
         psi = new ProcessStartInfo();
-        psi.FileName = @"C:\Users\dygam\AppData\Local\Programs\Python\Python39\python.exe";
+        psi.FileName = @"C:\Users\dygam\AppData\Local\Programs\Python\Python310\python.exe";
         psi.Arguments = @"C:\Users\dygam\Desktop\test.py";
         psi.UseShellExecute = false;
         psi.CreateNoWindow = true;
@@ -263,11 +263,11 @@ public class DAD : EditorWindow
         string t = "";
         try
         {
-            if (process != null && process.StandardOutput.EndOfStream)
-            {
-                process.Dispose();
-                process = null;
-            }
+            //if (process != null && process.StandardOutput.EndOfStream)
+            //{
+            //    process.Dispose();
+            //    process = null;
+            //}
             if (process == null)
             {
                 UnityEngine.Debug.Log("process is not on running, execute python process");
